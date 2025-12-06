@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,10 @@ import {
   Play,
   BookOpen,
   LogOut,
+  Mic,
+  MicOff,
 } from "lucide-react";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { useToast } from "@/hooks/use-toast";
 
 const TAGS = ["#work", "#family", "#selfcare"];
@@ -107,6 +110,26 @@ export default function Journal() {
   const [newContent, setNewContent] = useState("");
   const [newTags, setNewTags] = useState<string[]>([]);
   const [newMood, setNewMood] = useState("😊");
+
+  // Voice to text
+  const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechToText();
+
+  // Append transcript to content when voice input is received
+  useEffect(() => {
+    if (transcript) {
+      setNewContent(prev => prev + transcript);
+    }
+  }, [transcript]);
+
+  const handleVoiceToggle = () => {
+    if (isListening) {
+      stopListening();
+      toast({ title: "Voice input stopped" });
+    } else {
+      startListening();
+      toast({ title: "Listening...", description: "Speak now to add to your entry" });
+    }
+  };
 
   const filteredEntries = entries.filter((entry) => {
     const matchesSearch = entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -407,13 +430,37 @@ export default function Journal() {
                     className="bg-card border-mauve/30 focus:border-rose-gold text-lg font-serif"
                   />
 
-                  {/* Content */}
-                  <Textarea
-                    placeholder="What's on your mind today?"
-                    value={newContent}
-                    onChange={(e) => setNewContent(e.target.value)}
-                    className="min-h-[200px] bg-card border-mauve/30 focus:border-rose-gold resize-none"
-                  />
+                  {/* Content with Voice Input */}
+                  <div className="relative">
+                    <Textarea
+                      placeholder="What's on your mind today? Click the mic to speak..."
+                      value={newContent}
+                      onChange={(e) => setNewContent(e.target.value)}
+                      className="min-h-[200px] bg-card border-mauve/30 focus:border-rose-gold resize-none pr-12"
+                    />
+                    {isSupported && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleVoiceToggle}
+                        className={`absolute right-2 top-2 transition-all ${
+                          isListening 
+                            ? "text-rose-gold animate-pulse bg-rose-gold/20" 
+                            : "text-mauve hover:text-rose-gold hover:bg-rose-gold/10"
+                        }`}
+                        title={isListening ? "Stop listening" : "Start voice input"}
+                      >
+                        {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      </Button>
+                    )}
+                    {isListening && (
+                      <div className="absolute right-2 bottom-2 flex items-center gap-2 text-xs text-rose-gold">
+                        <span className="w-2 h-2 bg-rose-gold rounded-full animate-pulse" />
+                        Listening...
+                      </div>
+                    )}
+                  </div>
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-2">
