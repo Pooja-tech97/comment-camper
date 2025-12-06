@@ -33,8 +33,10 @@ import {
   Plus,
   Sparkles,
   FileText,
-  ChevronLeft,
   X,
+  Play,
+  BookOpen,
+  LogOut,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -187,24 +189,58 @@ export default function Journal() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    toast({ title: "Logged out", description: "See you soon!" });
+    navigate("/");
+  };
+
+  const user = JSON.parse(localStorage.getItem("user") || '{"name": "Guest"}');
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-rose-gold/20 bg-gradient-to-r from-mauve/10 via-background to-rose-gold/10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 border-b border-rose-gold/20 bg-gradient-to-r from-mauve/10 via-background to-rose-gold/10 backdrop-blur-sm">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-serif text-cream tracking-wide">revvere</h1>
+          <nav className="flex items-center gap-2">
             <Button 
               variant="ghost" 
-              size="icon" 
-              onClick={() => navigate("/")}
-              className="text-mauve hover:bg-mauve/10"
+              size="sm" 
+              onClick={() => navigate("/videos")}
+              className="text-cream/80 hover:text-cream hover:bg-cream/10"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <Play className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Videos</span>
             </Button>
-            <div>
-              <h1 className="text-2xl md:text-3xl text-beige">Wellness Journal</h1>
-              <p className="text-sm text-dusty-rose font-sans">Your sacred space for reflection</p>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/journal")}
+              className="text-cream/80 hover:text-cream hover:bg-cream/10"
+            >
+              <BookOpen className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Journal</span>
+            </Button>
+          </nav>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground hidden sm:block">
+              Welcome, {user.name}
+            </span>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Page Title */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-serif text-beige">Wellness Journal</h2>
+            <p className="text-sm text-dusty-rose">Your sacred space for reflection</p>
           </div>
           <Button 
             onClick={() => setIsWriting(true)}
@@ -214,9 +250,7 @@ export default function Journal() {
             New Entry
           </Button>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           {/* Sidebar - Filters */}
           <aside className="space-y-6">
