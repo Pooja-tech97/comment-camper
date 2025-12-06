@@ -64,6 +64,24 @@ export default {
         rose: {
           soft: "hsl(var(--soft-rose))",
         },
+        mauve: {
+          DEFAULT: "hsl(var(--mauve))",
+          deep: "hsl(var(--mauve-deep))",
+        },
+        beige: {
+          DEFAULT: "hsl(var(--beige))",
+          soft: "hsl(var(--beige-soft))",
+        },
+        "rose-gold": {
+          DEFAULT: "hsl(var(--rose-gold))",
+          deep: "hsl(var(--rose-gold-deep))",
+        },
+        blush: {
+          DEFAULT: "hsl(var(--blush))",
+        },
+        "dusty-rose": {
+          DEFAULT: "hsl(var(--dusty-rose))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

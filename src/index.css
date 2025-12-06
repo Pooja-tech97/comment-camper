@@ -43,10 +43,21 @@
     --deep-charcoal: 24 10% 8%;
     --soft-rose: 350 30% 75%;
     
+    /* Journal warm colors */
+    --mauve: 320 15% 75%;
+    --mauve-deep: 320 20% 40%;
+    --beige: 35 35% 88%;
+    --beige-soft: 35 25% 82%;
+    --rose-gold: 15 45% 70%;
+    --rose-gold-deep: 15 40% 55%;
+    --blush: 350 40% 85%;
+    --dusty-rose: 350 25% 65%;
+    
     /* Gradients */
     --gradient-warm: linear-gradient(135deg, hsl(24 20% 15%) 0%, hsl(24 10% 10%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(24 12% 16%) 0%, hsl(24 12% 12%) 100%);
     --gradient-glow: radial-gradient(circle at center, hsl(36 40% 85% / 0.1) 0%, transparent 70%);
+    --gradient-journal: linear-gradient(135deg, hsl(320 15% 75% / 0.15) 0%, hsl(15 45% 70% / 0.1) 100%);
     
     /* Shadows */
     --shadow-soft: 0 4px 20px hsl(0 0% 0% / 0.3);
