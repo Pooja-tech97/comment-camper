@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Play, MessageCircle, Heart, LogOut, ChevronLeft, Sparkles, Loader2 } from "lucide-react";
+import { Play, MessageCircle, Heart, LogOut, ChevronLeft, Sparkles, Loader2, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const GEMINI_API_KEY = "AIzaSyBTImxCWh1AenEhgtL5YGTlRP8DIVrh_yg";
@@ -196,6 +196,26 @@ const Videos = () => {
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-serif text-cream tracking-wide">revvere</h1>
+          <nav className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/videos")}
+              className="text-cream/80 hover:text-cream hover:bg-cream/10"
+            >
+              <Play className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Videos</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/journal")}
+              className="text-cream/80 hover:text-cream hover:bg-cream/10"
+            >
+              <BookOpen className="w-4 h-4 mr-1.5" />
+              <span className="hidden sm:inline">Journal</span>
+            </Button>
+          </nav>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">
               Welcome, {user.name}
