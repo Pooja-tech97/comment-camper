@@ -72,9 +72,22 @@ const Pricing = () => {
     setLoadingPlan(plan.id);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Check for localStorage user first (simulated auth)
+      const storedUser = localStorage.getItem("user");
+      let userId: string | null = null;
 
-      if (!user) {
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        userId = parsedUser.email; // Use email as a pseudo-id
+      } else {
+        // Fallback to Supabase auth
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          userId = user.id;
+        }
+      }
+
+      if (!userId) {
         toast({
           title: "Please sign in",
           description: "You need to be signed in to make a purchase.",
@@ -88,7 +101,7 @@ const Pricing = () => {
       const { data: payment, error: paymentError } = await supabase
         .from("payments")
         .insert({
-          user_id: user.id,
+          user_id: userId,
           amount: plan.price * 100,
           currency: "usd",
           plan_name: plan.name,
