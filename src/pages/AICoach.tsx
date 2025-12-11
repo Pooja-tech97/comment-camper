@@ -1,19 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useConversation } from "@elevenlabs/react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Mic, Bot } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & { 'agent-id': string }, HTMLElement>;
-    }
-  }
-}
+const AGENT_ID = "agent_1001kc3t20gxesr94xg3ec7yxy0y";
 
 const AICoach = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const conversation = useConversation({
+    onConnect: () => console.log("Connected to agent"),
+    onDisconnect: () => console.log("Disconnected from agent"),
+    onMessage: (message) => console.log("Message:", message),
+    onError: (error) => {
+      console.error("Conversation error:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Failed to connect to voice agent. Please try again.",
+      });
+    },
+  });
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -24,24 +37,54 @@ const AICoach = () => {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    // Load ElevenLabs widget script
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/@elevenlabs/convai-widget-embed";
-    script.async = true;
-    script.type = "text/javascript";
-    document.body.appendChild(script);
+  const startConversation = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation', {
+        body: { agentId: AGENT_ID },
+      });
 
-    return () => {
-      // Cleanup script on unmount
-      const existingScript = document.querySelector('script[src="https://unpkg.com/@elevenlabs/convai-widget-embed"]');
-      if (existingScript) {
-        existingScript.remove();
+      if (error) {
+        throw new Error(error.message || 'Failed to get conversation token');
       }
-    };
-  }, []);
+
+      if (!data?.signed_url) {
+        throw new Error('No signed URL received');
+      }
+
+      await conversation.startSession({
+        signedUrl: data.signed_url,
+      });
+
+      toast({
+        title: "Connected",
+        description: "Voice interface is ready. Start speaking!",
+      });
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection Failed",
+        description: error instanceof Error ? error.message : "Could not start voice chat.",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [conversation, toast]);
+
+  const stopConversation = useCallback(async () => {
+    await conversation.endSession();
+    toast({
+      title: "Disconnected",
+      description: "Voice conversation ended.",
+    });
+  }, [conversation, toast]);
 
   if (!user) return null;
+
+  const isConnected = conversation.status === "connected";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mauve/20 via-background to-blush/20">
@@ -61,51 +104,80 @@ const AICoach = () => {
               </Button>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-rose-gold" />
+              <Bot className="w-5 h-5 text-rose-gold" />
               <h1 className="text-lg font-semibold text-cream">AI Wellness Coach</h1>
             </div>
-            <div className="w-24" /> {/* Spacer for centering */}
+            <div className="w-24" />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Your Personal AI Wellness Coach
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Have a conversation with your AI coach about wellness, self-care, mindfulness, 
-            or anything on your mind. She's here to listen and guide you on your journey.
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+            Have a voice conversation with your wellness companion
           </p>
+          
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30">
+            <span 
+              className={`w-2 h-2 rounded-full ${
+                isConnected ? "bg-green-500" : "bg-muted-foreground"
+              }`} 
+            />
+            <span className="text-sm text-muted-foreground">
+              {isConnected ? "Connected" : "Disconnected"}
+            </span>
+          </div>
         </div>
 
-        {/* ElevenLabs Widget Container */}
-        <div className="flex justify-center items-center min-h-[500px] bg-card/50 rounded-2xl border border-border/50 backdrop-blur-sm p-8">
-          <elevenlabs-convai agent-id="agent_1001kc3t20gxesr94xg3ec7yxy0y"></elevenlabs-convai>
+        {/* Conversation Container */}
+        <div className="bg-card/30 rounded-2xl border border-border/50 backdrop-blur-sm overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-border/30">
+            <Bot className="w-5 h-5 text-muted-foreground" />
+            <span className="font-medium text-foreground">Conversation</span>
+          </div>
+          
+          {/* Content Area */}
+          <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+            <Bot className="w-16 h-16 text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground text-center">
+              {isConnected 
+                ? conversation.isSpeaking 
+                  ? "AI is speaking..." 
+                  : "Listening..."
+                : "Start a conversation by clicking the microphone button below"
+              }
+            </p>
+          </div>
         </div>
 
-        {/* Tips Section */}
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="bg-card/30 rounded-xl p-4 border border-border/30">
-            <h3 className="font-medium text-foreground mb-2">💬 Talk Naturally</h3>
-            <p className="text-sm text-muted-foreground">
-              Speak as you would to a friend. The AI understands natural conversation.
-            </p>
-          </div>
-          <div className="bg-card/30 rounded-xl p-4 border border-border/30">
-            <h3 className="font-medium text-foreground mb-2">🎯 Be Specific</h3>
-            <p className="text-sm text-muted-foreground">
-              Share what's on your mind - the more context, the better guidance you'll receive.
-            </p>
-          </div>
-          <div className="bg-card/30 rounded-xl p-4 border border-border/30">
-            <h3 className="font-medium text-foreground mb-2">🌸 Take Your Time</h3>
-            <p className="text-sm text-muted-foreground">
-              There's no rush. Pause, reflect, and engage at your own pace.
-            </p>
-          </div>
+        {/* Microphone Button */}
+        <div className="flex flex-col items-center mt-8">
+          <button
+            onClick={isConnected ? stopConversation : startConversation}
+            disabled={isConnecting}
+            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isConnected 
+                ? "bg-red-500/80 hover:bg-red-500 text-white" 
+                : "bg-cream hover:bg-cream/90 text-primary"
+            } ${isConnecting ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
+          >
+            <Mic className="w-8 h-8" />
+          </button>
+          <p className="text-muted-foreground text-sm mt-4">
+            {isConnecting 
+              ? "Connecting..." 
+              : isConnected 
+                ? "Click to end conversation" 
+                : "Click to start voice chat"
+            }
+          </p>
         </div>
       </main>
     </div>
